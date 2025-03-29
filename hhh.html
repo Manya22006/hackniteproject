@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Disease Diagnosis System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        input, select, button, textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result, #healthTips, #chartContainer, #history {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            color: #333;
+            font-size: 14px;
+        }
+
+        canvas {
+            width: 100%; 
+            height: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 Enhanced Disease Diagnosis System</h1>
+        <div>
+            <label for="name">Enter your name:</label>
+            <input type="text" id="name" placeholder="e.g., John Doe">
+        </div>
+        <div>
+            <label for="symptoms">Enter your symptoms:</label>
+            <input type="text" id="symptoms" placeholder="e.g., Fatigue, Fever, Sweating">
+        </div>
+        <div>
+            <label for="age">Enter your age:</label>
+            <input type="number" id="age" min="1" max="120" placeholder="e.g., 40">
+        </div>
+        <div>
+            <label for="gender">Enter your gender:</label>
+            <select id="gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div>
+            <label for="risk">Lifestyle Risk Factors:</label>
+            <textarea id="risk" placeholder="e.g., Smoking, High Blood Pressure"></textarea>
+        </div>
+        <button id="diagnoseBtn">Diagnose</button>
+        <button id="showHistoryBtn">Show History</button>
+        <div id="result">Please fill in your details and click "Diagnose" to see your results.</div>
+        <div id="healthTips"></div>
+        <div id="chartContainer">
+            <canvas id="severityChart"></canvas>
+        </div>
+        <div id="history">Your previous diagnoses will appear here.</div>
+    </div>
+
+    <script>
+        // Symptom-to-Disease Mapping
+        const symptomToDisease = {
+            "fatigue, fever, sweating, shaking chills, nausea, vomiting, shortness of breath": {
+                disease: "Pneumonia",
+                info: "Pneumonia inflames the lungs' air sacs. Immediate medical attention is recommended.",
+                severity: "High",
+                tips: "Stay hydrated, rest adequately, and avoid cold exposure."
+            },
+            "fever, cough, sore throat, fatigue": {
+                disease: "Flu",
+                info: "Flu is caused by influenza viruses. Rest and hydration help manage symptoms.",
+                severity: "Moderate",
+                tips: "Consider OTC flu medication, maintain hygiene, and get vaccinated."
+            },
+            "sneezing, itching, swelling": {
+                disease: "Allergy",
+                info: "Allergic reactions require avoidance of triggers. Antihistamines can help.",
+                severity: "Low",
+                tips: "Track and identify allergens to prevent symptoms."
+            }
+        };
+
+        // Disease History Tracking
+        const history = [];
+
+        // Listen for Symptoms Input Field Changes
+        document.getElementById("symptoms").addEventListener("input", function() {
+            const symptomsInput = this.value.toLowerCase().trim();
+            const resultDiv = document.getElementById("result");
+            const healthTipsDiv = document.getElementById("healthTips");
+            const chartContainer = document.getElementById("chartContainer");
+
+            let found = false;
+            for (let key in symptomToDisease) {
+                if (symptomsInput.includes(key.split(",")[0].trim())) {
+                    const diseaseData = symptomToDisease[key];
+                    resultDiv.innerHTML = `<strong>Disease Detected:</strong> ${diseaseData.disease}<br>
+                        <strong>Details:</strong> ${diseaseData.info}<br>
+                        <strong>Severity:</strong> ${diseaseData.severity}`;
+                    healthTipsDiv.innerHTML = `<strong>💡 Prevention Tips:</strong> ${diseaseData.tips}`;
+                    chartContainer.innerHTML = `<canvas id="severityChart"></canvas>`;
+                    drawSeverityChart(diseaseData.severity);
+                    history.push({ symptoms: symptomsInput, disease: diseaseData.disease });
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                resultDiv.innerHTML = "No disease detected based on entered symptoms.";
+                healthTipsDiv.innerHTML = "";
+            }
+        });
+
+        // Draw Severity Chart
+        function drawSeverityChart(severity) {
+            const ctx = document.getElementById("severityChart").getContext("2d");
+            const severityData = {
+                labels: ["Low", "Moderate", "High"],
+                datasets: [{
+                    label: "Disease Severity",
+                    data: severity === "Low" ? [100, 50, 20] : severity === "Moderate" ? [50, 100, 50] : [20, 50, 100],
+                    backgroundColor: ["green", "orange", "red"]
+                }]
+            };
+            new Chart(ctx, { type: 'bar', data: severityData });
+        }
+
+        // Show Disease History
+        document.getElementById("showHistoryBtn").addEventListener("click", function() {
+            const historyDiv = document.getElementById("history");
+            historyDiv.innerHTML = history.map((entry, index) =>
+                `<p><strong>${index + 1}.</strong> Symptoms: ${entry.symptoms}, Detected Disease: ${entry.disease}</p>`
+            ).join("");
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
